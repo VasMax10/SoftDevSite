@@ -1,0 +1,53 @@
+﻿@model IEnumerable<SoftDevLab.Brand>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<head>
+    <link rel="stylesheet" href="~/css/index.css">
+</head>
+
+<h2>Brands that has change 50+%</h2>
+
+<p>
+    <a asp-action="Index">Back to list</a>
+</p>
+
+@foreach (var item in Model)
+{
+    <div class="c-tile-list__item" style="width:500">
+        <article class="c-article-tile t-sass" itemscope itemtype="http://schema.org/Article">
+            <div class="c-article-tile__header">
+                <a class="c-article-tile__category">
+                    @item.Rank
+                </a>
+                <div class="c-article-tile__comment-count">
+                    <a asp-action="Details" asp-route-id="@item.Id">Map</a>
+                </div>
+            </div>
+
+            <div class="c-article-tile__body">
+                <h2 class="c-article-tile__title" itemprop="headline">
+                    <a>@item.Name</a>
+                </h2>
+            </div>
+            <div class="c-article-tile__body">
+                <h2 class="c-article-tile__title2" itemprop="headline">
+                    <a>@item.City</a>
+                </h2>
+            </div>
+
+            <footer class="c-article-tile__footer">
+                <span class="c-article-tile__author">
+                    $<a>@item.Cost</a>B
+                </span>
+
+                <time datetime="2016-05-12T12:00" class="c-article-tile__date" itemprop="datePublished">
+                    @item.Change%
+                </time>
+            </footer>
+        </article>
+    </div>
+
+}

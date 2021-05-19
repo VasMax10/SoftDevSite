@@ -1,0 +1,132 @@
+﻿@model SoftDevLab.Brand
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<div>
+    <a asp-action="Index">Back to List</a>
+    <br />
+    <button id="buildWay" onclick="buildWay()">Build Way to city headquarters of @Model.Name</button>
+    <br />
+    <a>First, determine your location and only then call the build of route</a>
+</div>
+
+<head>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.2/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.2/mapbox-gl.css' rel='stylesheet' />
+
+    <script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v2.3.0/mapbox-gl-geocoder.min.js'></script>
+    <link rel='stylesheet' href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v2.3.0/mapbox-gl-geocoder.css' type='text/css' />
+    <script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.0.0/mapbox-gl-draw.js'></script>
+    <link rel='stylesheet' href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.0.0/mapbox-gl-draw.css' type='text/css' />
+    <style>
+        #map {
+            position: sticky;
+            top: 0;
+            width: auto;
+            height: 500px;
+        }
+    </style>
+</head>
+    
+<div id='map'></div>
+
+   
+<script>
+	mapboxgl.accessToken = "pk.eyJ1IjoidmFzbWF4MTAiLCJhIjoiY2tvMzFvc3hoMDRtMTJ3bXh3MXljNGdlaSJ9.m1GqUGvon0sx0dAVaRI_4w";
+    var instructions = document.getElementById('instructions');
+    var map = new mapboxgl.Map({
+        container: 'map', // container id
+        style: 'mapbox://styles/mapbox/streets-v9', //hosted style id
+        center: [-122.675246,45.529431], // starting position
+        zoom: 10, // starting zoom
+    });
+
+    // make a directions request
+    function getRoute(e) {
+        var url = 'https://api.mapbox.com/directions/v5/mapbox/driving/' + e
+            +'?geometries=geojson&access_token=' + mapboxgl.accessToken;
+        var req = new XMLHttpRequest();
+        req.responseType = 'json';
+        req.open('GET', url, true);
+        req.onload = function () {
+            try {
+                var jsonResponse = req.response;
+                var coords = jsonResponse.routes[0].geometry;
+                addRoute(coords);
+            }
+            catch (e) {
+                alert("Can't build a way. \n There is no route or you had not determine your location.");
+            }
+        };
+        req.send();
+    }
+
+    // adds the route as a layer on the map
+    function addRoute (coords) {
+        // check if the route is already loaded
+        if (map.getSource('route')) {
+            map.removeLayer('route');
+            map.removeSource('route')
+        } else{
+            map.addLayer({
+                "id": "route",
+                "type": "line",
+                "source": {
+                    "type": "geojson",
+                    "data": {
+                        "type": "Feature",
+                        "properties": {},
+                        "geometry": coords
+                    }
+                },
+                "layout": {
+                    "line-join": "round",
+                    "line-cap": "round"
+                },
+                "paint": {
+                    "line-color": "#1db7dd",
+                    "line-width": 8,
+                    "line-opacity": 0.8
+                }
+            });
+        };
+    }
+
+    var geolocate = new mapboxgl.GeolocateControl();
+    var currentPosition = [3000, 3000];
+    //var toPosition = [0, 0];
+
+	map.addControl(geolocate);
+
+	geolocate.on('geolocate', function(e) {
+		var lon = e.coords.longitude;
+		var lat = e.coords.latitude
+        currentPosition = [lon, lat];
+
+		//getRoute(currentPosition + ';' + '30.5082136,50.4420799');
+    });
+
+    function getToPosition(e)
+    {
+        var url =  'https://api.mapbox.com/geocoding/v5/mapbox.places/' + e + '.json?access_token=' + mapboxgl.accessToken;
+        var req = new XMLHttpRequest();
+        req.responseType = 'json';
+        req.open('GET', url, true);
+        req.onload = function () {
+                var jsonResponse = req.response;
+                var toPosition = jsonResponse.features[0].center;
+                console.log(toPosition);
+                getRoute(currentPosition + ';' + toPosition);
+        };
+        req.send();
+    }
+
+    function buildWay() {
+        var toPlace = '@Model.City';
+        toPosition = getToPosition(toPlace);
+    }
+
+</script>
